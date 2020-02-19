@@ -20,12 +20,13 @@ $(document).ready(() => {
 
   var CSS = /<style[^>]*>[^<]*<\/style>/ig
   var HEAD = $('head')
-  var FRONT_PAGE = $('div#front-page')
-  var MESSAGE = $('div#front-page p#message')
-  var INPUT = $('div#front-page input#url')
-  var BUTTON = $('div#front-page input#button')
-  var DROP_AREA = $('div#front-page p#drop-area')
+  var FRONT_PAGE = $('#front-page')
+  var MESSAGE = $('#remarkise-message')
+  var INPUT = $('#remarkise-url')
+  var BUTTON = $('#remarkise-button')
+  var DROP_AREA = $('#remarkise-drop-area')
   var URL_PATTERN = /^(file|https?):\/\/.+/i
+  const uploadInputEl = document.querySelector('#remarkise-upload')
 
   var nextFix = 0
   var currentFix
@@ -121,40 +122,41 @@ $(document).ready(() => {
     BUTTON.click(trigger)
   }
 
-  if (typeof window.FileReader === 'undefined') {
-    DROP_AREA.removeClass('success')
-    DROP_AREA.addClass('fail')
-  } else {
-    DROP_AREA.removeClass('fail')
-    DROP_AREA.addClass('success')
+  const fileReaderAvailable = typeof window.FileReader === 'undefined'
+  DROP_AREA.toggleClass('hidden', fileReaderAvailable)
+
+  const readLocalFile = (file) => {
+    var reader = new FileReader()
+    reader.onloadend = () => createPresentationFromText(reader.result)
+    reader.readAsText(file)
   }
 
+  uploadInputEl.addEventListener('change', () => {
+    console.log('upload file input change and selection is', uploadInputEl.value)
+    readLocalFile(uploadInputEl.files[0])
+  })
+
+  DROP_AREA.on('click', () => {
+    console.log('click')
+    uploadInputEl.click()
+  })
+
   DROP_AREA.on('dragover', () => {
-    $(this).addClass('hover')
+    DROP_AREA.addClass('bg-orange-100')
     return false
   })
 
   DROP_AREA.on('dragend', () => {
-    $(this).removeClass('hover')
+    DROP_AREA.removeClass('bg-orange-100')
     return false
   })
 
   DROP_AREA.on('drop', (e) => {
-    $(this).removeClass('hover')
-
+    DROP_AREA.removeClass('bg-orange-100')
     e.preventDefault()
     e.stopPropagation()
-
-    var file = e.originalEvent.dataTransfer.files[0]
-    var reader = new FileReader()
-
-    reader.onloadend = () => {
-      // load presentation from text
-      createPresentationFromText(reader.result)
-    }
-
-    reader.readAsText(file)
-
+    const file = e.originalEvent.dataTransfer.files[0]
+    readLocalFile(file)
     return false
   })
 })
